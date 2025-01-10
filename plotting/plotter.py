@@ -1,7 +1,29 @@
 import matplotlib.pyplot as plt
+import numpy as np
+
+from utils import gaussian_model
 
 
 class Plotter:
+    def plot_processed_data_with_gaussian(
+            self,
+            datasets: tuple[tuple[list[float],list[float]]],
+            peaks_and_troughs: tuple[tuple[list[float],list[float]]],
+            all_gaussians: tuple[tuple[np.ndarray,np.ndarray]]
+    ) -> None:
+        datasets_names = ["A", "B", "C", "D", "E", "F", "G", "H"]
+        
+        self._plot_data(
+            datasets_names,
+            datasets,
+            processed=True,
+            peaks_and_troughs=peaks_and_troughs,
+            y_axis_label="Power (W)",
+            gaussian=True,
+            all_gaussians=all_gaussians
+        )
+
+
     def plot_processed_data_with_peaks_and_troughs(
             self,
             datasets: tuple[tuple[list[float],list[float]]],
@@ -30,7 +52,9 @@ class Plotter:
             datasets: tuple[tuple[list[float],list[float]]],
             processed: bool = False,
             peaks_and_troughs: tuple[tuple[list[float],list[float]]]|None = None,
-            y_axis_label: str = "Power (dBm)"
+            y_axis_label: str = "Power (dBm)",
+            gaussian: bool = False,
+            all_gaussians: tuple[tuple[np.ndarray,np.ndarray]]|None = None
     ) -> None:
         # Create a 4x2 fig
         fig, axes = plt.subplots(2, 4, figsize=(20, 15))
@@ -53,8 +77,19 @@ class Plotter:
                 axes[i].scatter(peak_times, peak_powers, label="Peaks", color="red", marker="o")
                 axes[i].scatter(trough_times, trough_powers, label="Troughs", color="yellow", marker="o")
 
+            if gaussian:
+                popt_big, _, popt_small, _ = all_gaussians[i]
+                y_gauss_big = gaussian_model(time, *popt_big)
+                y_gauss_small = gaussian_model(time, *popt_small)
+
+                axes[i].plot(time, y_gauss_big, label="Max power gaussian", color="green")
+                axes[i].plot(time, y_gauss_small, label="Min power gaussian", color="pink")
+
+
             axes[i].set_title(f"Baseline {datasets_names[i]}")
-            axes[i].legend()
+
+            if gaussian is False:
+                axes[i].legend()
 
         fig.text(0.5, 0.04, "Time (s)", ha="center")
         fig.text(0.04, 0.5, y_axis_label, va="center", rotation='vertical')

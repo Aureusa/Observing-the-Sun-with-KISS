@@ -1,7 +1,9 @@
 from scipy.signal import find_peaks
+from scipy.optimize import curve_fit
 import numpy as np
 
 from plotting.plotter import Plotter
+from utils import gaussian_model
 
 
 class Interfermetry:
@@ -13,6 +15,66 @@ class Interfermetry:
         Plots the peaks and the troughs of the data.
         """
         Plotter().plot_processed_data_with_peaks_and_troughs(self._processed_datasets, self._find_peaks_and_troughs())
+
+    def plot_gaussians(self):
+        all_gaussians = self._fit_gaussians()
+        peaks_and_troughs = self._find_peaks_and_troughs()
+        Plotter().plot_processed_data_with_gaussian(self._processed_datasets, peaks_and_troughs, all_gaussians)
+
+    def _fit_gaussians(self) -> tuple[tuple[np.ndarray,np.ndarray]]:
+        all_peaks_and_troughs = self._find_peaks_and_troughs()
+
+        all_gaussians = []
+        for i in range(len(all_peaks_and_troughs)):
+            peak_times, peak_powers, trough_times, trough_powers = all_peaks_and_troughs[i]
+
+            if i == 0:
+                # Outlier removal
+                outlier_peak_index = np.argmax(np.array(peak_powers))
+                del peak_powers[outlier_peak_index]
+                del peak_times[outlier_peak_index]
+
+                p0_guess_big = [np.max(peak_powers), peak_times[len(peak_times)//2], 1000, np.min(peak_powers)]
+                p0_guess_small = [np.max(trough_powers)-np.min(trough_powers), peak_times[len(peak_times)//2], 600, 5.75e-8]
+                popt_big, pcov_big, popt_small, pcov_small = self._fit_two_gaussians(
+                    peak_times, peak_powers, trough_times, trough_powers, p0_guess_big, p0_guess_small
+                )
+            elif i == 1:
+                p0_guess_big = [np.max(peak_powers), peak_times[len(peak_times)//2], 1000, np.min(peak_powers)]
+                p0_guess_small = [np.max(trough_powers)-np.min(trough_powers), 1500, 500, 5.5e-8]
+                popt_big, pcov_big, popt_small, pcov_small = self._fit_two_gaussians(
+                    peak_times, peak_powers, trough_times, trough_powers, p0_guess_big, p0_guess_small
+                )
+            elif i == 2:
+                p0_guess_big = [np.max(peak_powers)*2, peak_times[len(peak_times)//2], 1000, np.min(peak_powers)]
+                p0_guess_small = [np.max(trough_powers)-np.min(trough_powers), 1500, 500, 5.5e-8]
+                popt_big, pcov_big, popt_small, pcov_small = self._fit_two_gaussians(
+                    peak_times, peak_powers, trough_times, trough_powers, p0_guess_big, p0_guess_small
+                )
+            elif i == 4:
+                p0_guess_big = [np.max(peak_powers), peak_times[len(peak_times)//2], 1000, np.min(peak_powers)]
+                p0_guess_small = [np.max(trough_powers), trough_times[int(len(trough_times)//2)], 1000, np.min(trough_powers)]
+                popt_big, pcov_big, popt_small, pcov_small = self._fit_two_gaussians(
+                    peak_times, peak_powers, trough_times, trough_powers, p0_guess_big, p0_guess_small
+                )
+            else:
+                p0_guess_big = [np.max(peak_powers), peak_times[len(peak_times)//2], 1000, np.min(peak_powers)]
+                p0_guess_small = [np.max(trough_powers), trough_times[int(len(trough_times)//2)], 1000, np.min(trough_powers)]
+                popt_big, pcov_big, popt_small, pcov_small = self._fit_two_gaussians(
+                    peak_times, peak_powers, trough_times, trough_powers, p0_guess_big, p0_guess_small
+                )
+
+            all_gaussians.append(tuple((popt_big, pcov_big, popt_small, pcov_small)))
+
+        return tuple(all_gaussians)
+    
+    def _fit_two_gaussians(self, peak_times, peak_powers, trough_times, trough_powers, p0_guess_big, p0_guess_small):
+        popt_big, pcov_big = curve_fit(gaussian_model, peak_times, peak_powers, p0=p0_guess_big)
+        
+        popt_small, pcov_small = curve_fit(gaussian_model, trough_times, trough_powers, p0=p0_guess_small)
+
+        return popt_big, pcov_big, popt_small, pcov_small
+
 
     def _find_peaks_and_troughs(self) -> tuple[tuple[list[float],list[float]]]:
         """
@@ -30,6 +92,8 @@ class Interfermetry:
             # Find the indecies of troughs and peaks
             if i == 2:
                 peaks_indecies, trough_indecies = self._find_indecies(power, 700)
+                peaks_indecies = np.append(peaks_indecies,trough_indecies[-1])
+                trough_indecies = np.append(trough_indecies,trough_indecies[-2])
             elif i == 7:
                 peaks_indecies, trough_indecies = self._find_indecies(power, 1300)
             else:
@@ -91,4 +155,4 @@ class Interfermetry:
             powers.append(power_)
 
         return times, powers
-
+    

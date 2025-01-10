@@ -52,3 +52,7 @@ def preprocess_data(datasets: tuple[tuple[list[float],list[float]]]) -> tuple[tu
 
         processed_data.append(tuple((time, power_watt.tolist())))
     return tuple(processed_data)
+
+def gaussian_model(x, A, mean, sigma, offset):
+    gaussian = (1 / (sigma * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mean) / sigma) ** 2)
+    return A * gaussian + offset

@@ -21,4 +21,4 @@ interfermoeter = Interfermetry(all_data_sets_processed)
 
 #Plotter().plot_raw_data(all_data_sets)
 
-interfermoeter.plot_peaks_and_troughs()
+interfermoeter.plot_gaussians()
