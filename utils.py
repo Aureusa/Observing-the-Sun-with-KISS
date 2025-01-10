@@ -1,5 +1,5 @@
 import os
-import matplotlib.pyplot as plt
+import numpy as np
 
 DATA_DIR = os.path.join(os.getcwd(), "data")
 
@@ -46,9 +46,9 @@ def preprocess_data(datasets: tuple[tuple[list[float],list[float]]]) -> tuple[tu
         time, power = datasets[i]
 
         # Convert power from [dBm] -> [W]
-        exponent = power * 10 ** (-1)
+        exponent = np.array(power) * 10 ** (-1)
         power_mili_watt = 10 ** (exponent)
         power_watt = power_mili_watt * 0.001
 
-        processed_data.append(tuple(time, power_watt))
+        processed_data.append(tuple((time, power_watt.tolist())))
     return tuple(processed_data)
