@@ -14,11 +14,55 @@ class Interfermetry:
         all_pmin_pmax = self._compute_pmax_pmin()
 
         dataset = ["A", "B", "C", "D", "E", "F", "G", "H"]
+
+        visibilities_and_powers = []
         for i in range(len(all_pmin_pmax)):    
             p_max, p_max_error, p_min, p_min_error = all_pmin_pmax[i]
             visibility = (p_max-p_min) / (p_max+p_min)
-            visibility_error = (((2*p_min) / (p_max+p_min)**2)**2 + ((2*p_max) / (p_max+p_min)**2)**2)**0.5
+            visibility_error = (
+                (
+                    ((2*p_min) / (p_max+p_min)**2) * p_max_error
+                )**2
+                +
+                (
+                    ((2*p_max) / (p_max+p_min)**2) * p_min_error
+                )**2
+                )**0.5
+
+            p_avg = (p_max + p_min) / 2
+            p_avg_error = (
+                (0.5 * p_max_error) ** 2
+                +
+                (0.5 * p_min_error) ** 2
+            )**0.5
             
+            max_ = "{max}"
+            min_ = "{min}"
+            avg_ = "{avg}"
+
+            print(f"========= Baseline {dataset[i]} =========")
+            print("-------------- Power --------------")
+            print(f"P_{max_} = {p_max:e} \\pm {p_max_error:e} W")
+            print(f"P_{min_} = {p_min:e} \\pm {p_min_error:e} W")
+            print(f"P_{avg_} = {p_avg:e} \\pm {p_avg_error:e} W")
+            print("----------- Visibility -----------")
+            print(f"|V(B_\\lambda)| = {visibility:e} \\pm {visibility_error:e}")
+
+            visibilities_and_powers.append(
+                tuple(
+                    (
+                        p_max,
+                        p_max_error,
+                        p_min,
+                        p_min_error,
+                        p_avg,
+                        p_avg_error,
+                        visibility,
+                        visibility_error
+                    )
+                )
+            )
+        return tuple(visibilities_and_powers)
     
 
     def plot_peaks_and_troughs(self):
