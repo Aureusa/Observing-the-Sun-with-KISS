@@ -10,6 +10,17 @@ class Interfermetry:
     def __init__(self, processed_datasets: tuple[tuple[list[float],list[float]]]):
         self._processed_datasets = processed_datasets
 
+    def compute_visibility(self):
+        all_pmin_pmax = self._compute_pmax_pmin()
+
+        dataset = ["A", "B", "C", "D", "E", "F", "G", "H"]
+        for i in range(len(all_pmin_pmax)):    
+            p_max, p_max_error, p_min, p_min_error = all_pmin_pmax[i]
+            visibility = (p_max-p_min) / (p_max+p_min)
+            visibility_error = (((2*p_min) / (p_max+p_min)**2)**2 + ((2*p_max) / (p_max+p_min)**2)**2)**0.5
+            
+    
+
     def plot_peaks_and_troughs(self):
         """
         Plots the peaks and the troughs of the data.
@@ -86,7 +97,23 @@ class Interfermetry:
         popt_small, pcov_small = curve_fit(gaussian_model, trough_times, trough_powers, p0=p0_guess_small)
 
         return popt_big, pcov_big, popt_small, pcov_small
+    
+    def _compute_pmax_pmin(self) -> tuple[tuple[float,float,float,float]]:
+        all_gaussians = self._fit_gaussians()
 
+        all_pmin_pmax = []
+        for i in range(len(all_gaussians)):
+            popt_big, pcov_big, popt_small, pcov_small = all_gaussians[i]
+            p_max = popt_big[0] + popt_big[-1]
+            p_max_error = (pcov_big[0,0]**2 + pcov_big[-1,-1]**2) ** 0.5
+
+            p_min = popt_small[0] + popt_small[-1]
+            p_min_error = (pcov_small[0,0]**2 + pcov_small[-1,-1]**2) ** 0.5
+            
+            all_pmin_pmax.append(tuple((p_max, p_max_error, p_min, p_min_error)))
+
+        return tuple(all_pmin_pmax)
+    
 
     def _find_peaks_and_troughs(self) -> tuple[tuple[list[float],list[float]]]:
         """
