@@ -46,8 +46,20 @@ class Interfermetry:
                     peak_times, peak_powers, trough_times, trough_powers, p0_guess_big, p0_guess_small
                 )
             elif i == 2:
-                p0_guess_big = [np.max(peak_powers)*2, peak_times[len(peak_times)//2], 1000, np.min(peak_powers)]
+                p0_guess_big = [1.4e-7, 750, 150, np.min(peak_powers)]
                 p0_guess_small = [np.max(trough_powers)-np.min(trough_powers), 1500, 500, 5.5e-8]
+                popt_big, pcov_big, popt_small, pcov_small = self._fit_two_gaussians(
+                    peak_times, peak_powers, trough_times, trough_powers, p0_guess_big, p0_guess_small
+                )
+            elif i == 5:
+                p0_guess_big = [np.max(peak_powers)-np.min(peak_powers), 1250, 300, np.min(peak_powers)]
+                p0_guess_small = [np.max(trough_powers)-np.min(trough_powers), 1500, 500, 5.5e-8]
+                popt_big, pcov_big, popt_small, pcov_small = self._fit_two_gaussians(
+                    peak_times, peak_powers, trough_times, trough_powers, p0_guess_big, p0_guess_small
+                )
+            elif i == 6:
+                p0_guess_big = [np.max(peak_powers)-np.min(peak_powers), 1600, 300, np.min(peak_powers)]
+                p0_guess_small = [np.max(trough_powers)-np.min(trough_powers), 1900, 350, np.min(trough_powers)]
                 popt_big, pcov_big, popt_small, pcov_small = self._fit_two_gaussians(
                     peak_times, peak_powers, trough_times, trough_powers, p0_guess_big, p0_guess_small
                 )
