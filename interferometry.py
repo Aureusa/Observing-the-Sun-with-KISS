@@ -10,7 +10,32 @@ class Interfermetry:
     def __init__(self, processed_datasets: tuple[tuple[list[float],list[float]]]):
         self._processed_datasets = processed_datasets
 
-    def compute_visibility(self):
+    def remove_p_avg(self, plot: bool = True):
+        visibilities_and_powers = self.compute_visibility(print_results=False)
+        all_gaussians = self._fit_gaussians()
+        
+        power_min_p_avg_datasets = []
+        for i in range(len(visibilities_and_powers)):
+            time, power = self._processed_datasets[i]
+
+            popt_big, pcov_big, popt_small, pcov_small = all_gaussians[i]
+            
+            big_gaussian = gaussian_model(time, *popt_big)
+            small_gaussian = gaussian_model(time, *popt_small)
+
+            p_avg = (np.array(big_gaussian) + np.array(small_gaussian)) / 2
+
+            power_min_p_avg = np.array(power) - p_avg
+
+            power_min_p_avg_datasets.append(tuple((time, power_min_p_avg)))
+
+        if plot:
+            Plotter().plot_raw_data(power_min_p_avg_datasets)
+
+        return power_min_p_avg_datasets
+
+
+    def compute_visibility(self, print_results: bool = True):
         all_pmin_pmax = self._compute_pmax_pmin()
 
         dataset = ["A", "B", "C", "D", "E", "F", "G", "H"]
@@ -39,14 +64,15 @@ class Interfermetry:
             max_ = "{max}"
             min_ = "{min}"
             avg_ = "{avg}"
-
-            print(f"========= Baseline {dataset[i]} =========")
-            print("-------------- Power --------------")
-            print(f"P_{max_} = {p_max:e} \\pm {p_max_error:e} W")
-            print(f"P_{min_} = {p_min:e} \\pm {p_min_error:e} W")
-            print(f"P_{avg_} = {p_avg:e} \\pm {p_avg_error:e} W")
-            print("----------- Visibility -----------")
-            print(f"|V(B_\\lambda)| = {visibility:e} \\pm {visibility_error:e}")
+            
+            if print_results:
+                print(f"========= Baseline {dataset[i]} =========")
+                print("-------------- Power --------------")
+                print(f"P_{max_} = {p_max:e} \\pm {p_max_error:e} W")
+                print(f"P_{min_} = {p_min:e} \\pm {p_min_error:e} W")
+                print(f"P_{avg_} = {p_avg:e} \\pm {p_avg_error:e} W")
+                print("----------- Visibility -----------")
+                print(f"|V(B_\\lambda)| = {visibility:e} \\pm {visibility_error:e}")
 
             visibilities_and_powers.append(
                 tuple(
@@ -124,6 +150,12 @@ class Interfermetry:
                 popt_big, pcov_big, popt_small, pcov_small = self._fit_two_gaussians(
                     peak_times, peak_powers, trough_times, trough_powers, p0_guess_big, p0_guess_small
                 )
+            elif i == 7:
+                p0_guess_big = [np.max(peak_powers), peak_times[len(peak_times)//2], 1000, np.min(peak_powers)]
+                p0_guess_small = [np.max(trough_powers), 1000, 1000, np.min(trough_powers)]
+                popt_big, pcov_big, popt_small, pcov_small = self._fit_two_gaussians(
+                    peak_times, peak_powers, trough_times, trough_powers, p0_guess_big, p0_guess_small
+                )
             else:
                 p0_guess_big = [np.max(peak_powers), peak_times[len(peak_times)//2], 1000, np.min(peak_powers)]
                 p0_guess_small = [np.max(trough_powers), trough_times[int(len(trough_times)//2)], 1000, np.min(trough_powers)]
@@ -136,9 +168,9 @@ class Interfermetry:
         return tuple(all_gaussians)
     
     def _fit_two_gaussians(self, peak_times, peak_powers, trough_times, trough_powers, p0_guess_big, p0_guess_small):
-        popt_big, pcov_big = curve_fit(gaussian_model, peak_times, peak_powers, p0=p0_guess_big)
+        popt_big, pcov_big = curve_fit(gaussian_model, peak_times, peak_powers, p0=p0_guess_big)#, bounds=(0,1e6))
         
-        popt_small, pcov_small = curve_fit(gaussian_model, trough_times, trough_powers, p0=p0_guess_small)
+        popt_small, pcov_small = curve_fit(gaussian_model, trough_times, trough_powers, p0=p0_guess_small)#, bounds=(0,1e6))
 
         return popt_big, pcov_big, popt_small, pcov_small
     
@@ -149,11 +181,10 @@ class Interfermetry:
         for i in range(len(all_gaussians)):
             popt_big, pcov_big, popt_small, pcov_small = all_gaussians[i]
             p_max = popt_big[0] + popt_big[-1]
-            p_max_error = (pcov_big[0,0]**2 + pcov_big[-1,-1]**2) ** 0.5
+            p_max_error = (pcov_big[-1,-1]**2 + pcov_big[0,0]**2)**0.5
 
             p_min = popt_small[0] + popt_small[-1]
-            p_min_error = (pcov_small[0,0]**2 + pcov_small[-1,-1]**2) ** 0.5
-            
+            p_min_error = (pcov_small[-1,-1]**2 + pcov_small[0,0]**2)**0.5
             all_pmin_pmax.append(tuple((p_max, p_max_error, p_min, p_min_error)))
 
         return tuple(all_pmin_pmax)

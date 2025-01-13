@@ -79,8 +79,8 @@ class Plotter:
 
             if gaussian:
                 popt_big, _, popt_small, _ = all_gaussians[i]
-                y_gauss_big = gaussian_model(time, *popt_big)
-                y_gauss_small = gaussian_model(time, *popt_small)
+                y_gauss_big = gaussian_model(np.array(time), *popt_big)
+                y_gauss_small = gaussian_model(np.array(time), *popt_small)
 
                 axes[i].plot(time, y_gauss_big, label="Max power gaussian", color="green")
                 axes[i].plot(time, y_gauss_small, label="Min power gaussian", color="pink")

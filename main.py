@@ -21,4 +21,4 @@ interfermoeter = Interfermetry(all_data_sets_processed)
 
 #Plotter().plot_raw_data(all_data_sets)
 
-interfermoeter.compute_visibility()
+interfermoeter.remove_p_avg()
