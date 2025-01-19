@@ -10,6 +10,12 @@ class Interfermetry:
     def __init__(self, processed_datasets: tuple[tuple[list[float],list[float]]]):
         self._processed_datasets = processed_datasets
 
+    def w_fringes_in_terms_of_visibilities(self):
+        w_rad_list = self.narrow_the_search_space(plot=False, find_peaks=False, w_rad_result=True)
+        visibilities_and_powers = self.compute_visibility(print_results=False)
+
+        Plotter().plot_w_against_visibility(w_rad_list=w_rad_list, visibilities_and_powers=visibilities_and_powers)
+
     def narrow_the_search_space(self, plot: bool = True, find_peaks: bool = True, w_rad_result: bool = False):
         power_min_p_avg_deg_datasets = self.convert_to_deg(False)
 
@@ -57,10 +63,13 @@ class Interfermetry:
             power_min_p_avg_deg_datasets_narrowed.append(tuple((narrow_deg, narrow_power)))
 
         if plot:
-            Plotter().plot_narrow_data_with_peaks(power_min_p_avg_deg_datasets_narrowed, tuple(peaks_list))
+            if find_peaks:
+                Plotter().plot_narrow_data_with_peaks(power_min_p_avg_deg_datasets_narrowed, tuple(peaks_list))
+            else:
+                Plotter().plot_raw_data(power_min_p_avg_deg_datasets_narrowed, x_axis_label="Deg (°)")
 
         if w_rad_result:
-            return tuple(w_rad_list)
+            return w_rad_list
 
         return power_min_p_avg_deg_datasets_narrowed
 
@@ -190,7 +199,7 @@ class Interfermetry:
 
         if len(peaks_deg) == 2:
             w_deg = np.abs(peaks_deg[0] - peaks_deg[-1])
-            w_rad = np.rad2deg(w_deg)
+            w_rad = np.deg2rad(w_deg)
         else:
             raise ValueError("Found more than two peaks while trying to compute W_fringe!")
 

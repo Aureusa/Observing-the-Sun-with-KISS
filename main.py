@@ -21,4 +21,4 @@ interfermoeter = Interfermetry(all_data_sets_processed)
 
 #Plotter().plot_raw_data(all_data_sets)
 
-interfermoeter.narrow_the_search_space()
+interfermoeter.w_fringes_in_terms_of_visibilities()

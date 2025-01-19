@@ -5,6 +5,56 @@ from utils import gaussian_model
 
 
 class Plotter:
+    def plot_w_against_visibility(self, w_rad_list: list[float], visibilities_and_powers: tuple):
+        # Calculate the baseline
+        baseline = 1/np.array(w_rad_list)
+
+        visibilities = []
+        visibilities_error = []
+
+        # Unpack visibilitiies and powers tuple
+        for i in range(len(visibilities_and_powers)):
+            (
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                visibility,
+                visibility_error
+            ) = visibilities_and_powers[i]
+
+            visibilities.append(visibility)
+            visibilities_error.append(visibility_error)
+
+        visibilities_arr = np.array(visibilities)
+        
+        normalized_visibilities = visibilities_arr# / visibilities_arr.sum()
+        normalized_visibility_errors = np.array(visibilities_error)# / visibilities_arr.sum()
+
+        _, ax = plt.subplots()
+
+        # Plot the data with error bars
+        ax.errorbar(
+            baseline,
+            normalized_visibilities,
+            yerr=normalized_visibility_errors,
+            fmt='o',
+            ecolor='red',
+            capsize=5,
+            label='Data with Error Bars'
+        )
+
+        # Customize the plot
+        ax.set_title("Visibility in terms of baseline")
+        ax.set_xlabel("Baseline (λ)")
+        ax.set_ylabel("Visibility")
+        ax.legend()
+        ax.grid(True)
+
+        plt.show()
+
     def plot_processed_data_with_gaussian(
             self,
             datasets: tuple[tuple[list[float],list[float]]],
