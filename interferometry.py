@@ -10,6 +10,60 @@ class Interfermetry:
     def __init__(self, processed_datasets: tuple[tuple[list[float],list[float]]]):
         self._processed_datasets = processed_datasets
 
+    def narrow_the_search_space(self, plot: bool = True, find_peaks: bool = True, w_rad_result: bool = False):
+        power_min_p_avg_deg_datasets = self.convert_to_deg(False)
+
+        power_min_p_avg_deg_datasets_narrowed = []
+        peaks_list = []
+        w_rad_list = []
+        for i in range(len(power_min_p_avg_deg_datasets)):
+            deg, power = power_min_p_avg_deg_datasets[i]
+
+            if i==0:
+                narrow_deg, narrow_power, peaks, w_rad = self._find_W_fringe(
+                    deg, power, min_deg=7.75, max_deg=9, distance=305
+                )
+            elif i==1:
+                narrow_deg, narrow_power, peaks, w_rad = self._find_W_fringe(
+                    deg, power, min_deg=5.75, max_deg=7, distance=360
+                )
+            elif i==2:
+                narrow_deg, narrow_power, peaks, w_rad = self._find_W_fringe(
+                    deg, power, min_deg=1, max_deg=5, distance=700
+                )
+            elif i==3:
+                narrow_deg, narrow_power, peaks, w_rad = self._find_W_fringe(
+                    deg, power, min_deg=6.4, max_deg=7.45, distance=250
+                )
+            elif i==4:
+                narrow_deg, narrow_power, peaks, w_rad = self._find_W_fringe(
+                    deg, power, min_deg=6, max_deg=6.55, distance=125
+                )
+            elif i==5:
+                narrow_deg, narrow_power, peaks, w_rad = self._find_W_fringe(
+                    deg, power, min_deg=5.12, max_deg=6.5, distance=360
+                )
+            elif i==6:
+                narrow_deg, narrow_power, peaks, w_rad = self._find_W_fringe(
+                    deg, power, min_deg=6, max_deg=7.5, distance=360
+                )
+            elif i==7:
+                narrow_deg, narrow_power, peaks, w_rad = self._find_W_fringe(
+                    deg, power, min_deg=2.5, max_deg=10.5, distance=1800
+                )
+
+            w_rad_list.append(w_rad)
+            peaks_list.append(peaks)
+            power_min_p_avg_deg_datasets_narrowed.append(tuple((narrow_deg, narrow_power)))
+
+        if plot:
+            Plotter().plot_narrow_data_with_peaks(power_min_p_avg_deg_datasets_narrowed, tuple(peaks_list))
+
+        if w_rad_result:
+            return tuple(w_rad_list)
+
+        return power_min_p_avg_deg_datasets_narrowed
+
     def convert_to_deg(self, plot: bool = True):
         power_min_p_avg_datasets = self.remove_p_avg(False)
 
@@ -23,6 +77,8 @@ class Interfermetry:
 
         if plot:
             Plotter().plot_raw_data(power_min_p_avg_deg_datasets, x_axis_label="Deg (°)")
+
+        return power_min_p_avg_deg_datasets
 
     def remove_p_avg(self, plot: bool = True):
         visibilities_and_powers = self.compute_visibility(print_results=False)
@@ -115,6 +171,30 @@ class Interfermetry:
         all_gaussians = self._fit_gaussians()
         peaks_and_troughs = self._find_peaks_and_troughs()
         Plotter().plot_processed_data_with_gaussian(self._processed_datasets, peaks_and_troughs, all_gaussians)
+
+    def _find_W_fringe(self, deg: list[float], power: list[float], min_deg: float, max_deg: float, distance: float = 40):
+        deg_arr = np.array(deg)
+
+        min_deg_index = np.where(deg_arr > min_deg)[0][0]
+        max_deg_index = np.where(deg_arr > max_deg)[0][0]
+
+        narrow_deg = deg[min_deg_index:max_deg_index]
+        narrow_power = power[min_deg_index:max_deg_index]
+
+        peaks_indecies = find_peaks(narrow_power, distance=distance)[0]
+
+        peaks_deg = np.array(narrow_deg)[peaks_indecies]
+        peaks_power = np.array(narrow_power)[peaks_indecies]
+
+        peaks = tuple((peaks_deg.tolist(), peaks_power.tolist()))
+
+        if len(peaks_deg) == 2:
+            w_deg = np.abs(peaks_deg[0] - peaks_deg[-1])
+            w_rad = np.rad2deg(w_deg)
+        else:
+            raise ValueError("Found more than two peaks while trying to compute W_fringe!")
+
+        return narrow_deg, narrow_power, peaks, w_rad
 
     def _fit_gaussians(self) -> tuple[tuple[np.ndarray,np.ndarray]]:
         all_peaks_and_troughs = self._find_peaks_and_troughs()

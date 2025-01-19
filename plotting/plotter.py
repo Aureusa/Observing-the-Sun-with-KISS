@@ -33,6 +33,22 @@ class Plotter:
         
         self._plot_data(datasets_names, datasets, processed=True, peaks_and_troughs=peaks_and_troughs, y_axis_label="Power (W)")
 
+    def plot_narrow_data_with_peaks(
+            self,
+            datasets: tuple[tuple[list[float],list[float]]],
+            peaks: tuple[list[float]]
+    ) -> None:
+        datasets_names = ["A", "B", "C", "D", "E", "F", "G", "H"]
+        
+        self._plot_data(
+            datasets_names=datasets_names,
+            datasets=datasets,
+            peaks_narrow=peaks,
+            x_axis_label = "Deg (°)",
+            y_axis_label="Power (W)",
+            peaks=True
+        )
+
     def plot_raw_data(self, datasets: tuple[tuple[list[float],list[float]]], x_axis_label: str = "Time (s)") -> None:
         """
         Makes a 2x4 figure of all the raw data from the datasets.
@@ -52,10 +68,12 @@ class Plotter:
             datasets: tuple[tuple[list[float],list[float]]],
             processed: bool = False,
             peaks_and_troughs: tuple[tuple[list[float],list[float]]]|None = None,
+            peaks_narrow: tuple[tuple[list[float],list[float]]]|None = None,
             y_axis_label: str = "Power (dBm)",
             x_axis_label: str = "Time (s)",
             gaussian: bool = False,
-            all_gaussians: tuple[tuple[np.ndarray,np.ndarray]]|None = None
+            all_gaussians: tuple[tuple[np.ndarray,np.ndarray]]|None = None,
+            peaks: bool = False
     ) -> None:
         # Create a 4x2 fig
         fig, axes = plt.subplots(2, 4, figsize=(20, 15))
@@ -77,6 +95,11 @@ class Plotter:
 
                 axes[i].scatter(peak_times, peak_powers, label="Peaks", color="red", marker="o")
                 axes[i].scatter(trough_times, trough_powers, label="Troughs", color="yellow", marker="o")
+
+            if peaks:
+                peaks_degs, _ = peaks_narrow[i]
+                for peaks in peaks_degs:
+                    axes[i].axvline(x = peaks, color = "red", ls="--")
 
             if gaussian:
                 popt_big, _, popt_small, _ = all_gaussians[i]
