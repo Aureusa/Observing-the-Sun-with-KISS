@@ -10,6 +10,20 @@ class Interfermetry:
     def __init__(self, processed_datasets: tuple[tuple[list[float],list[float]]]):
         self._processed_datasets = processed_datasets
 
+    def convert_to_deg(self, plot: bool = True):
+        power_min_p_avg_datasets = self.remove_p_avg(False)
+
+        power_min_p_avg_deg_datasets = []
+        for i in range(len(power_min_p_avg_datasets)):
+            time, power = power_min_p_avg_datasets[i]
+            
+            deg = (np.array(time) * 360) / 86400
+
+            power_min_p_avg_deg_datasets.append(tuple((deg.tolist(), power)))
+
+        if plot:
+            Plotter().plot_raw_data(power_min_p_avg_deg_datasets, x_axis_label="Deg (°)")
+
     def remove_p_avg(self, plot: bool = True):
         visibilities_and_powers = self.compute_visibility(print_results=False)
         all_gaussians = self._fit_gaussians()

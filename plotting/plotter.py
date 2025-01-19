@@ -33,7 +33,7 @@ class Plotter:
         
         self._plot_data(datasets_names, datasets, processed=True, peaks_and_troughs=peaks_and_troughs, y_axis_label="Power (W)")
 
-    def plot_raw_data(self, datasets: tuple[tuple[list[float],list[float]]]) -> None:
+    def plot_raw_data(self, datasets: tuple[tuple[list[float],list[float]]], x_axis_label: str = "Time (s)") -> None:
         """
         Makes a 2x4 figure of all the raw data from the datasets.
 
@@ -43,7 +43,7 @@ class Plotter:
         """
         datasets_names = ["A", "B", "C", "D", "E", "F", "G", "H"]
         
-        self._plot_data(datasets_names, datasets)
+        self._plot_data(datasets_names, datasets, x_axis_label=x_axis_label)
 
 
     def _plot_data(
@@ -53,6 +53,7 @@ class Plotter:
             processed: bool = False,
             peaks_and_troughs: tuple[tuple[list[float],list[float]]]|None = None,
             y_axis_label: str = "Power (dBm)",
+            x_axis_label: str = "Time (s)",
             gaussian: bool = False,
             all_gaussians: tuple[tuple[np.ndarray,np.ndarray]]|None = None
     ) -> None:
@@ -91,7 +92,7 @@ class Plotter:
             if gaussian is False:
                 axes[i].legend()
 
-        fig.text(0.5, 0.04, "Time (s)", ha="center")
+        fig.text(0.5, 0.04, x_axis_label, ha="center")
         fig.text(0.04, 0.5, y_axis_label, va="center", rotation='vertical')
 
         #plt.tight_layout()
