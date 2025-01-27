@@ -1,9 +1,11 @@
 import os
 import numpy as np
+from scipy.special import j1
 
 DATA_DIR = os.path.join(os.getcwd(), "data")
 
-def get_data(folder: str = "dataset_1") -> tuple[tuple[list[float],list[float]]]:
+
+def get_data(folder: str = "dataset_1") -> tuple[tuple[list[float], list[float]]]:
     """
     Gets all the data from a given folder
 
@@ -36,11 +38,14 @@ def get_data(folder: str = "dataset_1") -> tuple[tuple[list[float],list[float]]]
                 except ValueError:
                     continue
 
-        all_datasets.append(tuple((all_times,all_powers)))
+        all_datasets.append(tuple((all_times, all_powers)))
 
     return tuple(all_datasets)
 
-def preprocess_data(datasets: tuple[tuple[list[float],list[float]]]) -> tuple[tuple[list[float],list[float]]]:
+
+def preprocess_data(
+    datasets: tuple[tuple[list[float], list[float]]]
+) -> tuple[tuple[list[float], list[float]]]:
     processed_data = []
     for i in range(len(datasets)):
         time, power = datasets[i]
@@ -53,6 +58,21 @@ def preprocess_data(datasets: tuple[tuple[list[float],list[float]]]) -> tuple[tu
         processed_data.append(tuple((time, power_watt.tolist())))
     return tuple(processed_data)
 
+
 def gaussian_model(x, A, mean, sigma, offset):
     gaussian = np.exp(-0.5 * ((x - mean) / sigma) ** 2)
     return A * gaussian + offset
+
+
+def sinc_function(x, a, b):
+    return a * np.sinc(b * x / np.pi)
+
+
+def bessel_function(x, a, b):
+    return 2 * np.pi * a * b * j1(a * x) / x
+
+
+def bessel_function_dunut(x, a_large, b_large, a_small, b_small):
+    large = 2 * np.pi * a_large * b_large * j1(a_large * x) / x
+    small = 2 * np.pi * a_small * b_small * j1(a_small * x) / x
+    return large - small

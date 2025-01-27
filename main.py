@@ -19,6 +19,6 @@ all_data_sets_processed = preprocess_data(all_data_sets)
 
 interfermoeter = Interfermetry(all_data_sets_processed)
 
-#Plotter().plot_raw_data(all_data_sets)
-
-interfermoeter.w_fringes_in_terms_of_visibilities()
+# Plotter().plot_raw_data(all_data_sets)
+if __name__ == "__main__":
+    interfermoeter.fit_funcs()
