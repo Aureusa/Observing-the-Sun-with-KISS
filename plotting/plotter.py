@@ -65,7 +65,7 @@ class Plotter:
             linspace_x,
             sinc_model(linspace_x, *sinc_model_params),
             label=f"Fitted Sinc\na = {sinc_model_params[0]:.2f}\nb = {sinc_model_params[1]:.2f}",
-            color="r",
+            color="g",
             linestyle="--",
         )
         # axs[2].plot(linspace_x, sinc_model(linspace_x, *p0_sinc),

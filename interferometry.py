@@ -19,12 +19,12 @@ class Interfermetry:
         visibilities, visibilities_error = self._get_visibilities()
         baselines = self._get_baselines()
 
-        p0_bessel = [1.15, 0.25]
+        p0_bessel = [1, 0.25]
         popt_bessel, pcov = curve_fit(
             bessel_function, baselines, visibilities, p0=p0_bessel
         )
 
-        p0_bessel_donut = [3.75, 3.5, 0.4, 0.3]
+        p0_bessel_donut = [0.75, 0.5, 0.15, 0.05]
         popt_bessel_donut, pcov = curve_fit(
             bessel_function_dunut, baselines, visibilities, p0=p0_bessel_donut
         )
