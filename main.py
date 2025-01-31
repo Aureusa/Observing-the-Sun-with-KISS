@@ -12,6 +12,7 @@ all_data_sets_processed = preprocess_data(all_data_sets)
 # Instantiate an interermoter
 interfermoeter = Interfermetry(all_data_sets_processed)
 
+
 def main():
     # Plot the raw data
     Plotter().plot_raw_data(all_data_sets)
@@ -39,5 +40,7 @@ def main():
     # the visibilities in terms of baseline
     interfermoeter.fit_funcs()
 
+
 if __name__ == "__main__":
-    main()
+    # main()
+    interfermoeter.fit_funcs()

@@ -19,32 +19,106 @@ class Interfermetry:
         visibilities, visibilities_error = self._get_visibilities()
         baselines = self._get_baselines()
 
-        p0_bessel = [1, 0.25]
-        popt_bessel, pcov = curve_fit(
-            bessel_function, baselines, visibilities, p0=p0_bessel
-        )
+        p0_bessel = [0.2, 8]
 
-        p0_bessel_donut = [0.75, 0.5, 0.15, 0.05]
-        popt_bessel_donut, pcov = curve_fit(
-            bessel_function_dunut, baselines, visibilities, p0=p0_bessel_donut
-        )
+        p0_bessel_donut = [0.2, 8, 0.15, 0.05]
 
         p0_sinc = [1, 0.1]
-        popt_sinc, pcov = curve_fit(sinc_function, baselines, visibilities, p0=p0_sinc)
+
+        # Determine goodness of fit
+        mae_bessel, mae_bessel_dunut, mae_sinc = self._goodness_of_fit(
+            p0_bessel, p0_bessel_donut, p0_sinc, baselines, visibilities
+        )
+
+        maes_array = np.array([mae_bessel, mae_bessel_dunut, mae_sinc])
+
+        best_mae = maes_array.min()
+
+        linspace_x = np.linspace(0, np.array(baselines).max(), 1000)
+
+        print("Mean absolute error of the fit:")
+        print(f"Bessel: {mae_bessel:.2f}")
+        print(f"Bessel Donut: {mae_bessel_dunut:.2f}")
+        print(f"Sinc: {mae_sinc:.2f}")
+
+        print("Best fit: Sinc")
+        print(f"MAE: {best_mae:.2f}")
+        sinc = sinc_function(linspace_x, *p0_sinc)
+        for i in range(1000):
+            if sinc[i] < 0 and sinc[i] + 0.01 > 0:
+                first_0 = i
+                break
+
+        min_point = [linspace_x[first_0], sinc[first_0]]
 
         Plotter().plot_fitted_funcs(
             baseline=baselines,
             visibility=visibilities,
             bassel_model=bessel_function,
-            basel_model_params=popt_bessel,
             bassel_model_donut=bessel_function_dunut,
-            basel_model_donut_params=popt_bessel_donut,
             sinc_model=sinc_function,
-            sinc_model_params=popt_sinc,
             p0_bessel=p0_bessel,
             p0_bessel_donut=p0_bessel_donut,
             p0_sinc=p0_sinc,
+            min_point=min_point,
         )
+
+    def _goodness_of_fit(
+        self,
+        p0_bessel: list[float],
+        p0_bessel_donut: list[float],
+        p0_sinc: list[float],
+        baselines: list[float],
+        visibilities: list[float],
+    ) -> tuple:
+        """
+        Computes the Mean Absolute Error (MAE) for three models (Bessel, Bessel donut, and sinc)
+        by comparing the model predictions with the actual visibility data.
+
+        :param p0_bessel: Initial parameters for the Bessel function
+        :type p0_bessel: list of float
+        :param p0_bessel_donut: Initial parameters for the Bessel donut function
+        :type p0_bessel_donut: list of float
+        :param p0_sinc: Initial parameters for the sinc function
+        :type p0_sinc: list of float
+        :param baselines: Array of baseline data
+        :type baselines: list of float
+        :param visibilities: Array of visibility data
+        :type visibilities: list of float
+
+        :return: Tuple containing the MAE for Bessel, Bessel donut, and sinc functions
+        :rtype: tuple of float
+        """
+        bessel = bessel_function(baselines, *p0_bessel)
+        bessel_donut = bessel_function_dunut(baselines, *p0_bessel_donut)
+        sinc = sinc_function(baselines, *p0_sinc)
+
+        bessel[0] = 1
+        bessel_donut[0] = 1
+
+        mae_bessel = self._mean_absolute_error(visibilities, bessel)
+        mae_bessel_dunut = self._mean_absolute_error(visibilities, bessel_donut)
+        mae_sinc = self._mean_absolute_error(visibilities, sinc)
+
+        return mae_bessel, mae_bessel_dunut, mae_sinc
+
+    def _mean_absolute_error(self, x: Any, y: Any):
+        """
+        Calculates the Mean Absolute Error (MAE) between two datasets.
+
+        :param x: First dataset to compare
+        :type x: Any
+        :param y: Second dataset to compare
+        :type y: Any
+
+        :return: The mean absolute error between the two datasets
+        :rtype: float
+        """
+        x = np.array(x)
+        y = np.array(y)
+        res = x - y
+        res_abs = np.abs(res)
+        return res_abs.mean()
 
     def w_fringes_in_terms_of_visibilities(self):
         """
@@ -166,7 +240,9 @@ class Interfermetry:
 
         if plot:
             Plotter().plot_raw_data(
-                power_min_p_avg_deg_datasets, x_axis_label="Deg (°)"
+                power_min_p_avg_deg_datasets,
+                x_axis_label="Deg (°)",
+                y_axis_label="Power (W)",
             )
 
         return power_min_p_avg_deg_datasets
@@ -247,7 +323,6 @@ class Interfermetry:
                 print("-------------- Power --------------")
                 print(f"P_{max_} = {p_max:e} \\pm {p_max_error:e} W")
                 print(f"P_{min_} = {p_min:e} \\pm {p_min_error:e} W")
-                print(f"P_{avg_} = {p_avg:e} \\pm {p_avg_error:e} W")
                 print("----------- Visibility -----------")
                 print(f"|V(B_\\lambda)| = {visibility:e} \\pm {visibility_error:e}")
 
