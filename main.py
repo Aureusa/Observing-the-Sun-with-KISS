@@ -42,5 +42,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
-    interfermoeter.fit_funcs()
+    main()
